@@ -12,11 +12,11 @@ import (
 
 func MakeProductHandlers(r *mux.Router, service price.UseCase) {
 	r.Handle("/", getAllProducts(service)).Methods("GET", "OPTIONS")
-	r.Handle("/products", getAllProducts(service)).Methods("GET", "OPTIONS")
 	r.Handle("/{id}", getProduct(service)).Methods("GET", "OPTIONS")
 	r.Handle("/", createProduct(service)).Methods("POST", "OPTIONS")
 	r.Handle("/{id}", updateProduct(service)).Methods("PUT", "OPTIONS")
 	r.Handle("/{id}", deleteProduct(service)).Methods("DELETE", "OPTIONS")
+	r.Handle("/compare/", compareProduct(service)).Methods("POST", "OPTIONS")
 
 }
 
@@ -126,5 +126,24 @@ func deleteProduct(service price.UseCase) http.Handler {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+	})
+}
+
+func compareProduct(service price.UseCase) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		var p []*price.Product
+		var temp, largerNumber float64
+		json.NewDecoder(r.Body).Decode(&p)
+
+		for _, p := range p {
+			if float64(p.Price) > temp {
+				temp = float64(p.Price)
+				largerNumber = temp
+			}
+		}
+		json.NewEncoder(w).Encode(&largerNumber)
+
 	})
 }
